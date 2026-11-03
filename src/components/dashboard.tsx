@@ -132,6 +132,12 @@ export function Dashboard() {
     { label: "Requests to you", value: dashboard.stats.hostPendingBookings, icon: Clock3, href: "#host-requests" },
     { label: "Your pending", value: dashboard.stats.pendingBookings, icon: UsersRound, href: "/my-bookings" },
   ];
+  const activity = [
+    { label: "Studio listings", value: dashboard.stats.totalListings },
+    { label: "All bookings", value: dashboard.stats.totalBookings },
+    { label: "New requests", value: dashboard.stats.hostPendingBookings },
+  ];
+  const activityMax = Math.max(1, ...activity.map((item) => item.value));
 
   return (
     <main className="dashboard-page">
@@ -154,6 +160,24 @@ export function Dashboard() {
               <ArrowRight className="dashboard-stat-arrow" size={15} />
             </Link>
           ))}
+        </section>
+
+        <section className="dashboard-activity" aria-label="Account activity chart">
+          <div className="dashboard-panel-heading">
+            <div><p className="eyebrow">At a glance</p><h2>Your activity</h2></div>
+            <span>Current totals</span>
+          </div>
+          <div className="activity-bars">
+            {activity.map((item, index) => (
+              <div className="activity-bar-row" key={item.label}>
+                <span>{item.label}</span>
+                <div className="activity-bar-track">
+                  <i className={`activity-bar-fill activity-bar-${index + 1}`} style={{ width: `${Math.max(4, item.value / activityMax * 100)}%` }} />
+                </div>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="dashboard-two-column">

@@ -111,6 +111,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
 
         <div className="field-label-row">
           <label className="field-label" htmlFor="login-password">Password</label>
+          <Link className="text-link forgot-password-link" href="/forgot-password">Forgot password?</Link>
         </div>
         <div className={`password-field ${errors.password ? "has-error" : ""}`}>
           <KeyRound size={16} aria-hidden="true" />
@@ -132,7 +133,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         {errors.password && <span className="field-error">{errors.password.message}</span>}
 
         <button className="button button-accent auth-submit" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Signing in…" : "Sign in"} <ArrowRight size={16} aria-hidden="true" />
+          {isSubmitting ? "Signing in…" : "Login"} <ArrowRight size={16} aria-hidden="true" />
         </button>
       </form>
       <div className="auth-divider"><span>or</span></div>
@@ -228,12 +229,12 @@ export function RegistrationForm({ redirectTo }: { redirectTo: string }) {
         <p className="password-hint">Use at least 6 characters, with an uppercase and a lowercase letter.</p>
 
         <button className="button button-accent auth-submit" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Creating account…" : "Create account"} <ArrowRight size={16} aria-hidden="true" />
+          {isSubmitting ? "Creating account…" : "Register"} <ArrowRight size={16} aria-hidden="true" />
         </button>
       </form>
       <div className="auth-divider"><span>or</span></div>
       <GoogleSignInButton redirectTo={redirectTo} />
-      <p className="auth-terms">By continuing, you agree to our <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.</p>
+      <p className="auth-terms">By creating an account, you agree to follow the host rules and safety requirements for each space you book.</p>
     </AuthPanel>
   );
 }
