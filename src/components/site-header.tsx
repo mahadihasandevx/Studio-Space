@@ -4,16 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { Aperture, ArrowUpRight, CalendarDays, Heart, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRound, X } from "lucide-react";
+import { Aperture, ArrowUpRight, CalendarDays, Heart, House, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/theme-provider";
 import { authClient } from "@/lib/auth-client";
 import { clearApiSession } from "@/lib/session";
 
 const navItems = [
+  { label: "Home", href: "/" },
   { label: "Explore studios", href: "/studios" },
-  { label: "How it works", href: "/how-it-works" },
-  { label: "About us", href: "/about" },
+  { label: "How It Works", href: "/how-it-works" },
+  { label: "About Us", href: "/about" },
 ];
 
 export function SiteHeader() {
@@ -23,31 +24,34 @@ export function SiteHeader() {
   const { data: session, isPending } = authClient.useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   async function signOut() {
+    router.replace("/");
+    setProfileOpen(false);
     let authSignOutError: string | null = null;
+    let apiSessionError: string | null = null;
+    try {
+      await clearApiSession();
+    } catch (error) {
+      apiSessionError = error instanceof Error ? error.message : "Your API session could not be cleared.";
+    }
+
     try {
       const result = await authClient.signOut();
-      if (result.error) {
-        authSignOutError = result.error.message ?? "We couldn’t sign you out.";
-      }
+      if (result.error) authSignOutError = result.error.message ?? "We couldn’t sign you out.";
     } catch (error) {
       authSignOutError = error instanceof Error ? error.message : "We couldn’t sign you out.";
     }
 
-    try {
-      await clearApiSession();
-      if (authSignOutError) {
-        toast.error(`${authSignOutError} API access has been cleared.`);
-      } else {
-        toast.success("You’ve been signed out.");
-      }
-      setProfileOpen(false);
-      router.replace("/");
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Your API session could not be cleared.");
+    if (apiSessionError) {
+      toast.error(apiSessionError);
+    } else if (authSignOutError) {
+      toast.error(`${authSignOutError} API access has been cleared.`);
+    } else {
+      toast.success("You’ve been signed out.");
     }
+    router.refresh();
   }
 
   return (
@@ -61,20 +65,20 @@ export function SiteHeader() {
         <nav className={`main-nav ${menuOpen ? "is-open" : ""}`} aria-label="Main navigation">
           {navItems.map((item) => (
             <Link
-              aria-current={pathname === item.href ? "page" : undefined}
-              className={pathname === item.href ? "is-active" : ""}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              className={isActive(item.href) ? "is-active" : ""}
               href={item.href}
               key={item.label}
               onClick={() => setMenuOpen(false)}
             >
               {item.label}
-              {pathname === item.href && <motion.span className="nav-active-indicator" layoutId="nav-active-indicator" />}
+              {isActive(item.href) && <motion.span className="nav-active-indicator" layoutId="nav-active-indicator" />}
             </Link>
           ))}
           {!isPending && !session && (
             <div className="mobile-nav-actions">
-              <Link href="/login" onClick={() => setMenuOpen(false)}>Log in</Link>
-              <Link className="button button-accent" href="/register" onClick={() => setMenuOpen(false)}>Get started <ArrowUpRight size={15} aria-hidden="true" /></Link>
+              <Link href="/login" onClick={() => setMenuOpen(false)}>Login</Link>
+              <Link className="button button-accent" href="/register" onClick={() => setMenuOpen(false)}>Register <ArrowUpRight size={15} aria-hidden="true" /></Link>
             </div>
           )}
         </nav>
@@ -85,10 +89,14 @@ export function SiteHeader() {
             <Sun className="theme-icon-dark" size={17} aria-hidden="true" />
           </button>
           {!isPending && session ? (
-            <div className="profile-menu">
+            <div
+              className="profile-menu"
+              onMouseEnter={() => setProfileOpen(true)}
+              onMouseLeave={() => setProfileOpen(false)}
+            >
               <button
                 className="profile-trigger"
-                onClick={() => setProfileOpen((open) => !open)}
+                onClick={() => setProfileOpen(true)}
                 type="button"
                 aria-label="Open account menu"
                 aria-expanded={profileOpen}
@@ -103,19 +111,19 @@ export function SiteHeader() {
                     <span>{session.user.email}</span>
                   </div>
                   <Link href="/dashboard" onClick={() => setProfileOpen(false)}><LayoutDashboard size={16} /> Dashboard</Link>
-                  <Link href="/add-studio" onClick={() => setProfileOpen(false)}><Aperture size={16} /> Add a studio</Link>
-                  <Link href="/my-listings" onClick={() => setProfileOpen(false)}><UserRound size={16} /> My listings</Link>
-                  <Link href="/my-bookings" onClick={() => setProfileOpen(false)}><CalendarDays size={16} /> My bookings</Link>
-                  <Link href="/saved-studios" onClick={() => setProfileOpen(false)}><Heart size={16} /> Saved studios</Link>
-                  <button onClick={signOut} type="button"><LogOut size={16} /> Sign out</button>
+                  <Link href="/add-studio" onClick={() => setProfileOpen(false)}><Aperture size={16} /> Add New Studio</Link>
+                  <Link href="/my-listings" onClick={() => setProfileOpen(false)}><House size={16} /> My Studio Listings</Link>
+                  <Link href="/my-bookings" onClick={() => setProfileOpen(false)}><CalendarDays size={16} /> My Bookings</Link>
+                  <Link href="/saved-studios" onClick={() => setProfileOpen(false)}><Heart size={16} /> Saved Studios</Link>
+                  <button onClick={signOut} type="button"><LogOut size={16} /> Logout</button>
                 </div>
               )}
             </div>
           ) : !isPending ? (
             <>
-              <Link className="header-login" href="/login">Log in</Link>
+              <Link className="header-login" href="/login">Login</Link>
               <Link className="button button-accent header-cta" href="/register">
-                Get started <ArrowUpRight size={15} aria-hidden="true" />
+                Register <ArrowUpRight size={15} aria-hidden="true" />
               </Link>
             </>
           ) : null}
