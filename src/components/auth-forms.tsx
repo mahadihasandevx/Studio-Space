@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
+import { createApiSession } from "@/lib/session";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address."),
@@ -37,7 +38,7 @@ function GoogleSignInButton({ redirectTo }: { redirectTo: string }) {
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${window.location.origin}${redirectTo}`,
+        callbackURL: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
       });
       if (result.error) {
         toast.error(result.error.message ?? "Google sign-in is unavailable.");
@@ -80,6 +81,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         return;
       }
 
+      await createApiSession();
       toast.success("You’re signed in. Welcome back.");
       router.replace(redirectTo);
       router.refresh();
@@ -95,7 +97,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       description="Sign in to pick up where your next good idea left off."
       footer={<>New to StudioSpace? <Link href="/register">Create an account <ArrowRight size={14} /></Link></>}
     >
-      <form className="auth-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form className="auth-form" onSubmit={handleSubmit(onSubmit, () => toast.error("Check the highlighted fields and try again."))} noValidate>
         <label className="field-label" htmlFor="login-email">Email address</label>
         <input
           autoComplete="email"
@@ -162,8 +164,7 @@ export function RegistrationForm({ redirectTo }: { redirectTo: string }) {
       }
 
       toast.success("Your StudioSpace account is ready.");
-      router.replace(redirectTo);
-      router.refresh();
+      router.replace(`/login?registered=1&redirect=${encodeURIComponent(redirectTo)}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We couldn’t create your account.");
     }
@@ -176,7 +177,7 @@ export function RegistrationForm({ redirectTo }: { redirectTo: string }) {
       description="Create an account and find a good place to get started."
       footer={<>Already have an account? <Link href="/login">Sign in <ArrowRight size={14} /></Link></>}
     >
-      <form className="auth-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form className="auth-form" onSubmit={handleSubmit(onSubmit, () => toast.error("Check the highlighted fields and try again."))} noValidate>
         <label className="field-label" htmlFor="register-name">Full name</label>
         <div className={`password-field ${errors.name ? "has-error" : ""}`}>
           <UserRound size={16} aria-hidden="true" />

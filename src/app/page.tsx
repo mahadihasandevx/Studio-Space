@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { FeaturedStudios } from "@/components/featured-studios";
 import { HeroSlider } from "@/components/hero-slider";
+import { HomepageStats } from "@/components/homepage-stats";
 
 const categories = [
   {
@@ -55,18 +56,23 @@ const categories = [
 const steps = [
   {
     number: "01",
-    title: "Find your space",
+    title: "Discover spaces",
     text: "Explore distinctive studios made for the way you create.",
   },
   {
     number: "02",
-    title: "Make it yours",
+    title: "Select shoot hours",
     text: "Choose your date, set your hours, and see the price upfront.",
   },
   {
     number: "03",
+    title: "Book instantly",
+    text: "Send your request with clear timing and pricing for the host.",
+  },
+  {
+    number: "04",
     title: "Make something",
-    text: "Show up, settle in, and get straight to the good part.",
+    text: "Show up, settle in, and create and produce the good stuff.",
   },
 ];
 
@@ -120,6 +126,37 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <section className="guarantee-section">
+        <div className="section-wrap">
+          <div className="section-heading">
+            <div><p className="eyebrow">Creator-first, host-backed</p><h2>Feel good about the work day.</h2></div>
+            <p className="section-intro">Clear details and thoughtful people make creative work easier to focus on.</p>
+          </div>
+          <div className="guarantee-grid">
+            <article><ShieldCheck /><h3>Liability protection</h3><p>Booking details are visible up front, with a clear record of the space and time reserved.</p></article>
+            <article><UsersRound /><h3>Verified profiles</h3><p>Every listing is connected to a named host profile, so you know who is welcoming you.</p></article>
+            <article><Sparkles /><h3>Equipment care</h3><p>Hosts share space guidance before arrival to help keep tools and gear in good shape.</p></article>
+            <article><ArrowRight /><h3>Host support</h3><p>Reach out to your host about access, setup, and the small details that keep a session moving.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-wrap how-section" id="host-support">
+        <div className="how-copy">
+          <p className="eyebrow">For the people with a little room</p>
+          <h2>Turn your creative space into someone’s next big idea.</h2>
+          <p>Share the details, set your hourly rate, and meet the creators who will treat your studio with care.</p>
+          <Link className="button button-dark" href="/add-studio">Host your space <ArrowRight size={17} aria-hidden="true" /></Link>
+        </div>
+        <div className="host-points host-guarantee-points">
+          <div><span className="host-point-icon"><ShieldCheck size={19} /></span><span><strong>Set the ground rules</strong><small>Share access notes and equipment guidance with every booking.</small></span></div>
+          <div><span className="host-point-icon"><UsersRound size={19} /></span><span><strong>Meet thoughtful creators</strong><small>Clear requests help both sides plan a successful session.</small></span></div>
+          <div><span className="host-point-icon"><Sparkles size={19} /></span><span><strong>Your calendar, your call</strong><small>Review every booking request before it becomes confirmed.</small></span></div>
+        </div>
+      </section>
+
+      <HomepageStats />
 
       <section className="section-wrap how-section" id="how-it-works">
         <div className="how-copy">

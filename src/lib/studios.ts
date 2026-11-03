@@ -16,6 +16,14 @@ export const studioSchema = studioCardSchema.extend({
   images: z.array(z.string().url()),
   amenities: z.array(z.string()),
   description: z.string(),
+  reviews: z.array(
+    z.object({
+      author: z.string(),
+      rating: z.number(),
+      comment: z.string(),
+      createdAt: z.string(),
+    }),
+  ).default([]),
   host: z.object({
     id: z.string(),
     name: z.string(),

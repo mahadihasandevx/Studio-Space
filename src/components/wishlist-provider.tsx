@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ApiError, apiRequest } from "@/lib/api";
+import { ApiError, apiRequest, jsonBody } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 
 const idsResponseSchema = z.object({ data: z.array(z.string()) });
@@ -71,13 +71,12 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     }
     if (pendingIds.has(studioId)) return;
 
-    const currentlySaved = wishlist.userId === session.user.id && wishlist.ids.has(studioId);
     setPendingIds((current) => new Set(current).add(studioId));
     try {
       const result = await apiRequest(
-        `/api/v1/wishlist/${encodeURIComponent(studioId)}`,
+        "/api/v1/wishlist/toggle",
         toggleResponseSchema,
-        { method: currentlySaved ? "DELETE" : "POST" },
+        { method: "POST", body: jsonBody({ studioId }) },
       );
       setWishlist((current) => {
         const ids = current.userId === session.user.id ? new Set(current.ids) : new Set<string>();
@@ -101,7 +100,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         return next;
       });
     }
-  }, [pendingIds, router, session, wishlist]);
+  }, [pendingIds, router, session]);
 
   const value = useMemo(
     () => ({ isSaved, isPending, toggleStudio }),

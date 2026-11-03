@@ -43,7 +43,6 @@ type StudioFormInput = z.input<typeof studioFormSchema>;
 type StudioFormOutput = z.output<typeof studioFormSchema>;
 
 const studioResponseSchema = z.object({ data: studioSchema });
-const uploadResponseSchema = z.object({ data: z.object({ url: z.string().url() }) });
 
 const emptyValues: StudioFormInput = {
   title: "",
@@ -68,6 +67,7 @@ export function StudioForm({
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const [uploading, setUploading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const {
     register,
     handleSubmit,
@@ -118,16 +118,22 @@ export function StudioForm({
 
     setUploading(true);
     try {
-      const result = await apiRequest(
-        "/api/v1/uploads/images",
-        uploadResponseSchema,
-        {
-          method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
-        },
+      const imgbbKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+      if (!imgbbKey) {
+        toast.error("Image upload is not configured. Paste a public image URL instead.");
+        return;
+      }
+      const formData = new FormData();
+      formData.set("image", file);
+      const response = await fetch(
+        `https://api.imgbb.com/1/upload?key=${encodeURIComponent(imgbbKey)}`,
+        { method: "POST", body: formData },
       );
-      const nextImages = [...getValues("images"), result.data.url];
+      const payload = await response.json() as { success?: boolean; data?: { url?: string } };
+      if (!response.ok || !payload.success || !payload.data?.url) {
+        throw new Error("The image host could not complete the upload.");
+      }
+      const nextImages = [...getValues("images"), payload.data.url];
       setImages(nextImages);
       setValue("images", nextImages, { shouldValidate: true });
       toast.success("Studio image uploaded.");
@@ -148,6 +154,23 @@ export function StudioForm({
     const nextImages = getValues("images").filter((currentImage) => currentImage !== image);
     setImages(nextImages);
     setValue("images", nextImages, { shouldValidate: true });
+  }
+
+  function addImageUrl() {
+    const parsedUrl = z.string().url().safeParse(imageUrl.trim());
+    if (!parsedUrl.success) {
+      toast.error("Enter a valid public image URL.");
+      return;
+    }
+    if (images.length >= 10) {
+      toast.error("A listing can include up to 10 images.");
+      return;
+    }
+    const nextImages = [...getValues("images"), parsedUrl.data];
+    setImages(nextImages);
+    setValue("images", nextImages, { shouldValidate: true });
+    setImageUrl("");
+    toast.success("Image URL added.");
   }
 
   function toggleAmenity(amenity: string, checked: boolean) {
@@ -247,21 +270,37 @@ export function StudioForm({
 
           <section className="form-section">
             <div className="form-section-heading"><span>02</span><div><h2>Show them around</h2><p>Upload up to 10 images. The first image is your cover photo.</p></div></div>
-            <label className={`upload-dropzone ${uploading ? "is-uploading" : ""}`}>
-              {uploading ? <LoaderCircle className="upload-spinner" size={23} /> : <ImagePlus size={23} />}
-              <strong>{uploading ? "Uploading your image…" : "Add a studio photo"}</strong>
-              <span>JPEG, PNG or WebP · 8 MB max per image</span>
-              <input
-                accept="image/jpeg,image/png,image/webp"
-                disabled={uploading}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void uploadImage(file);
-                  event.target.value = "";
-                }}
-                type="file"
-              />
-            </label>
+            {process.env.NEXT_PUBLIC_IMGBB_API_KEY ? (
+              <label className={`upload-dropzone ${uploading ? "is-uploading" : ""}`}>
+                {uploading ? <LoaderCircle className="upload-spinner" size={23} /> : <ImagePlus size={23} />}
+                <strong>{uploading ? "Uploading your image…" : "Add a studio photo"}</strong>
+                <span>JPEG, PNG or WebP · 8 MB max per image</span>
+                <input
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={uploading}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void uploadImage(file);
+                    event.target.value = "";
+                  }}
+                  type="file"
+                />
+              </label>
+            ) : (
+              <div className="image-url-entry">
+                <p>Image uploads are not configured. Add a public image URL instead.</p>
+                <label className="form-field">
+                  <span>Image URL</span>
+                  <input
+                    onChange={(event) => setImageUrl(event.target.value)}
+                    placeholder="https://images.example.com/studio.jpg"
+                    type="url"
+                    value={imageUrl}
+                  />
+                </label>
+                <button className="button button-outline" onClick={addImageUrl} type="button">Add image URL</button>
+              </div>
+            )}
             <div className="uploaded-images">
               {images.map((image, index) => (
                 <div className="uploaded-image" key={image} style={{ backgroundImage: `url("${image}")` }}>

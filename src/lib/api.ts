@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const apiUrl = "/api/server";
 
 export class ApiError extends Error {
   constructor(

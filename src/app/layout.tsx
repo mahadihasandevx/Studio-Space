@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import { Suspense } from "react";
+import { Inter, Space_Grotesk } from "next/font/google";
 import type { ReactNode } from "react";
+import { MotionConfig } from "motion/react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -8,9 +10,15 @@ import { WishlistProvider } from "@/components/wishlist-provider";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
@@ -26,15 +34,19 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={manrope.variable}>
-        <ThemeProvider>
-          <WishlistProvider>
-            <SiteHeader />
-            {children}
-            <SiteFooter />
-            <Toaster position="bottom-right" richColors />
-          </WishlistProvider>
-        </ThemeProvider>
+      <body className={`${inter.variable} ${spaceGrotesk.variable}`}>
+        <MotionConfig reducedMotion="user">
+          <ThemeProvider>
+            <WishlistProvider>
+              <Suspense fallback={<div className="header-loading" aria-hidden="true" />}>
+                <SiteHeader />
+              </Suspense>
+              {children}
+              <SiteFooter />
+              <Toaster position="bottom-right" richColors />
+            </WishlistProvider>
+          </ThemeProvider>
+        </MotionConfig>
       </body>
     </html>
   );

@@ -2,38 +2,51 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import { Aperture, ArrowUpRight, CalendarDays, Heart, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/theme-provider";
 import { authClient } from "@/lib/auth-client";
+import { clearApiSession } from "@/lib/session";
 
 const navItems = [
   { label: "Explore studios", href: "/studios" },
-  { label: "How it works", href: "/#how-it-works" },
-  { label: "About us", href: "/#about" },
+  { label: "How it works", href: "/how-it-works" },
+  { label: "About us", href: "/about" },
 ];
 
 export function SiteHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const { toggleTheme } = useTheme();
   const { data: session, isPending } = authClient.useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   async function signOut() {
+    let authSignOutError: string | null = null;
     try {
       const result = await authClient.signOut();
       if (result.error) {
-        toast.error(result.error.message ?? "We couldn’t sign you out.");
-        return;
+        authSignOutError = result.error.message ?? "We couldn’t sign you out.";
+      }
+    } catch (error) {
+      authSignOutError = error instanceof Error ? error.message : "We couldn’t sign you out.";
+    }
+
+    try {
+      await clearApiSession();
+      if (authSignOutError) {
+        toast.error(`${authSignOutError} API access has been cleared.`);
+      } else {
+        toast.success("You’ve been signed out.");
       }
       setProfileOpen(false);
-      toast.success("You’ve been signed out.");
       router.replace("/");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "We couldn’t sign you out.");
+      toast.error(error instanceof Error ? error.message : "Your API session could not be cleared.");
     }
   }
 
@@ -47,7 +60,16 @@ export function SiteHeader() {
 
         <nav className={`main-nav ${menuOpen ? "is-open" : ""}`} aria-label="Main navigation">
           {navItems.map((item) => (
-            <Link href={item.href} key={item.label} onClick={() => setMenuOpen(false)}>{item.label}</Link>
+            <Link
+              aria-current={pathname === item.href ? "page" : undefined}
+              className={pathname === item.href ? "is-active" : ""}
+              href={item.href}
+              key={item.label}
+              onClick={() => setMenuOpen(false)}
+            >
+              {item.label}
+              {pathname === item.href && <motion.span className="nav-active-indicator" layoutId="nav-active-indicator" />}
+            </Link>
           ))}
           {!isPending && !session && (
             <div className="mobile-nav-actions">

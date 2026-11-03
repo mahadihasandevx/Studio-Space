@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight, Check, MapPin, ShieldCheck, Star, UsersRound } from "lucide-react";
+import { Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 import { ApiError, apiRequest } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { BookingModal } from "@/components/booking-modal";
@@ -68,18 +74,30 @@ export function StudioDetails({ studioId }: { studioId: string }) {
     <main className="studio-details-page">
       <div className="section-wrap">
         <Link className="details-back" href="/studios"><ArrowLeft size={15} /> All studios</Link>
-        <section className={`studio-gallery ${studio.images.length === 1 ? "single-image" : ""}`}>
-          {studio.images.slice(0, 3).map((image, index) => (
-            <div
-              aria-label={`${studio.title} studio image ${index + 1}`}
-              className={`gallery-image gallery-image-${index + 1}`}
-              key={image}
-              role="img"
-              style={{ backgroundImage: `url("${image}")` }}
-            />
+        <Swiper
+          aria-label={`${studio.title} photo gallery`}
+          className="studio-gallery"
+          modules={[Navigation, Pagination]}
+          navigation
+          pagination={{ clickable: true }}
+          spaceBetween={12}
+          slidesPerView={1}
+          breakpoints={{ 760: { slidesPerView: Math.min(studio.images.length, 2) }, 1100: { slidesPerView: Math.min(studio.images.length, 3) } }}
+        >
+          {studio.images.map((image, index) => (
+            <SwiperSlide key={image}>
+              <div className={`gallery-image gallery-image-${index + 1}`}>
+                <Image
+                  alt={`${studio.title} studio photo ${index + 1}`}
+                  fill
+                  sizes="(max-width: 760px) 100vw, 33vw"
+                  src={image}
+                />
+              </div>
+            </SwiperSlide>
           ))}
+        </Swiper>
           {studio.images.length === 0 && <div className="gallery-no-image">StudioSpace</div>}
-        </section>
         <div className="details-layout">
           <div className="details-main">
             <div className="details-title-row">
@@ -103,6 +121,26 @@ export function StudioDetails({ studioId }: { studioId: string }) {
             <section className="details-block">
               <h2>About this space</h2>
               <p>{studio.description}</p>
+            </section>
+
+            <section className="details-block reviews-section">
+              <div className="reviews-heading">
+                <div><h2>Creator notes</h2><p>Thoughts from people who have made something here.</p></div>
+                <span><Star size={15} fill="currentColor" /> {studio.rating?.toFixed(1) ?? "New"}</span>
+              </div>
+              {studio.reviews.length ? (
+                <div className="review-grid">
+                  {studio.reviews.map((review) => (
+                    <article className="review-card" key={`${review.author}-${review.createdAt}`}>
+                      <div><strong>{review.author}</strong><span><Star size={13} fill="currentColor" /> {review.rating.toFixed(1)}</span></div>
+                      <p>“{review.comment}”</p>
+                      <small>{new Date(review.createdAt).toLocaleDateString(undefined, { month: "long", year: "numeric" })}</small>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p>No creator reviews yet. Be the first to book this space.</p>
+              )}
             </section>
 
             <section className="details-block">
