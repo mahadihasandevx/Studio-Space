@@ -13,6 +13,7 @@ export function StudioCard({ studio }: { studio: StudioCardData }) {
   return (
     <motion.article
       className="studio-card"
+      data-category={studio.category}
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "0px 0px -40px 0px" }}
@@ -58,7 +59,7 @@ export function StudioCard({ studio }: { studio: StudioCardData }) {
         <div className="studio-card-bottom">
           <span><strong>${studio.hourlyRate}</strong> / hour</span>
           <Link href={`/studios/${studio.id}`} aria-label={`View details for ${studio.title}`}>
-            <ArrowRight size={17} aria-hidden="true" />
+            View details <ArrowRight size={15} aria-hidden="true" />
           </Link>
         </div>
       </div>
