@@ -36,6 +36,7 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="footer-main">
         <div className="footer-brand-column">
+          <div className="footer-wordmark" aria-label="StudioSpace">Studio<span>Space</span><i>.</i></div>
           <Link className="brand brand-footer" href="/">
             <span className="brand-mark"><Aperture size={23} strokeWidth={1.8} aria-hidden="true" /></span>
             <span>studio<span>space</span></span>
@@ -56,7 +57,7 @@ export function SiteFooter() {
       </div>
       <div className="footer-bottom">
         <span>© 2026 StudioSpace. Made for makers.</span>
-        <span>Space use follows host rules and applicable safety requirements.</span>
+        <span>By booking a space, you agree to follow its host rules and safety requirements.</span>
       </div>
     </footer>
   );
