@@ -76,10 +76,20 @@ const steps = [
   },
 ];
 
+const tickerCategories = ["PHOTO STUDIOS", "FILM STAGES", "PODCAST ROOMS", "MUSIC SUITES", "ART WORKSHOPS"];
+
 export default function Home() {
   return (
     <main>
       <HeroSlider />
+
+      <div className="category-marquee" aria-label="Photo studios, film stages, podcast rooms, music suites, and art workshops">
+        <div className="category-marquee-track" aria-hidden="true">
+          {[...tickerCategories, ...tickerCategories].map((category, index) => (
+            <span key={`${category}-${index}`}>{category}<i /></span>
+          ))}
+        </div>
+      </div>
 
       <section className="section-wrap featured-section" id="featured">
         <div className="section-heading">
