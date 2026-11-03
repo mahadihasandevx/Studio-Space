@@ -19,17 +19,16 @@ export function FeaturedStudios() {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let active = true;
     async function fetchStudios() {
       try {
         const result = await apiRequest(
           "/api/v1/studios/featured",
           featuredResponseSchema,
-          { signal: controller.signal },
         );
-        setStudios(result.data);
+        if (active) setStudios(result.data);
       } catch (loadError) {
-        if (controller.signal.aborted) return;
+        if (!active) return;
         setError(
           loadError instanceof ApiError
             ? loadError.message
@@ -38,12 +37,14 @@ export function FeaturedStudios() {
               : "Featured studios could not be loaded.",
         );
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (active) setLoading(false);
       }
     }
 
     void fetchStudios();
-    return () => controller.abort();
+    return () => {
+      active = false;
+    };
   }, [attempt]);
 
   if (loading) {

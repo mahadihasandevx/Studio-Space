@@ -23,11 +23,19 @@ export async function apiRequest<Schema extends z.ZodType>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${apiUrl}${path}`, {
+  const request = () => fetch(`${apiUrl}${path}`, {
     ...init,
     headers,
     credentials: "include",
   });
+  let response = await request();
+  if (response.status === 401 && !init.signal?.aborted) {
+    const sessionResponse = await fetch("/api/session", {
+      method: "POST",
+      credentials: "same-origin",
+    });
+    if (sessionResponse.ok) response = await request();
+  }
   const body = await response.text();
   let payload: unknown;
 

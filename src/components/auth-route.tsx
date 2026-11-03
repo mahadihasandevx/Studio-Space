@@ -11,7 +11,7 @@ function safeRedirectPath(value: string | null) {
     value.includes("\\") ||
     /[\r\n]/.test(value)
   ) {
-    return "/dashboard";
+    return "/";
   }
   return value;
 }

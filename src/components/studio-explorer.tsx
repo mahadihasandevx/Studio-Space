@@ -147,7 +147,7 @@ export function StudioExplorer({ initialCategory = "" }: { initialCategory?: str
         <div className="explore-filters">
           <label>
             <span>Category</span>
-            <select onChange={(event) => updateFilter("category", event.target.value)} value={filters.category}>
+            <select className="category-filter-select" onChange={(event) => updateFilter("category", event.target.value)} value={filters.category}>
               <option value="">All spaces</option>
               <option value="Photo Studios">Photo studios</option>
               <option value="Film Stages">Film stages</option>
