@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { RouteLoading } from "@/components/route-loading";
 import { StudioDetails } from "@/components/studio-details";
 
 export default function StudioDetailsPage({
@@ -7,7 +8,7 @@ export default function StudioDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="section-padding text-center">Loading studio...</div>}>
+    <Suspense fallback={<RouteLoading />}>
       <StudioDetailsPageContent params={params} />
     </Suspense>
   );
