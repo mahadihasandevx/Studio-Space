@@ -2,7 +2,7 @@
 
 StudioSpace helps creators find and book photo studios, film stages, podcast rooms, music suites, and art workshops.
 
-**Live URL:** `https://your-studiospace-domain.example` (replace with the deployed URL)
+**Live URL:** Not deployed yet. Replace this note with the production URL before submission.
 
 ## Features
 
@@ -56,4 +56,4 @@ Never commit `.env` files or real credentials.
 - **Email:** `examiner@studiospace.com`
 - **Password:** `Examiner123`
 
-The server seed command creates this account and 15 studio listings. Run the seed only against a local or otherwise intended database.
+The server seed command creates this account and 15 clearly labeled demo studios with sample reviews. These fixtures are not real listings or endorsements. Run the seed only against a local or otherwise intended database.
