@@ -1,0 +1,27 @@
+[
+  {
+    "viewport": "desktop",
+    "theme": "light",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "viewport": "tablet",
+    "theme": "light",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "viewport": "tablet",
+    "theme": "light",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+    "viewport": "tablet",
+    "theme": "light",
+    "text": "Failed to load resource: the server responded with a status of 504 (Gateway Timeout)"
+  },
+  {
+    "viewport": "mobile",
+    "theme": "light",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  }
+]
