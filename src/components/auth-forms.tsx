@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Aperture, ArrowRight, Eye, EyeOff, KeyRound, UserRound } from "lucide-react";
-import { useForm } from "react-hook-form";
+import {
+  Aperture,
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  KeyRound,
+  UserRound,
+  X,
+} from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
@@ -60,7 +69,7 @@ function GoogleSignInButton({ redirectTo }: { redirectTo: string }) {
   );
 }
 
-export function LoginForm({ redirectTo }: { redirectTo: string }) {
+export function LoginForm({ redirectTo, registered = false }: { redirectTo: string; registered?: boolean }) {
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const {
@@ -68,6 +77,12 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
+
+  useEffect(() => {
+    if (registered) {
+      toast.success("Account created. Sign in to continue.");
+    }
+  }, [registered]);
 
   async function onSubmit(values: LoginValues) {
     try {
@@ -146,10 +161,18 @@ export function RegistrationForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegistrationValues>({ resolver: zodResolver(registrationSchema) });
+  const password = useWatch({ control, name: "password" }) ?? "";
+  const passwordRules = [
+    { label: "At least 6 characters", valid: password.length >= 6 },
+    { label: "One uppercase letter", valid: /[A-Z]/.test(password) },
+    { label: "One lowercase letter", valid: /[a-z]/.test(password) },
+  ];
+  const passedRules = passwordRules.filter((rule) => rule.valid).length;
 
   async function onSubmit(values: RegistrationValues) {
     try {
@@ -211,6 +234,8 @@ export function RegistrationForm({ redirectTo }: { redirectTo: string }) {
         <div className={`password-field ${errors.password ? "has-error" : ""}`}>
           <KeyRound size={16} aria-hidden="true" />
           <input
+            aria-describedby="password-rules"
+            aria-invalid={Boolean(errors.password)}
             autoComplete="new-password"
             id="register-password"
             placeholder="At least 6 characters"
@@ -225,8 +250,31 @@ export function RegistrationForm({ redirectTo }: { redirectTo: string }) {
             {passwordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
+        <div
+          className="password-strength"
+          id="password-rules"
+          aria-live="polite"
+          data-filled={passedRules}
+        >
+          <div className="password-strength-bars" aria-hidden="true">
+            {passwordRules.map((rule) => (
+              <i key={rule.label} className={rule.valid ? "is-valid" : undefined} />
+            ))}
+          </div>
+          <ul>
+            {passwordRules.map((rule) => (
+              <li key={rule.label} className={rule.valid ? "is-valid" : undefined}>
+                {rule.valid ? (
+                  <Check size={12} aria-hidden="true" />
+                ) : (
+                  <X size={12} aria-hidden="true" />
+                )}
+                {rule.label}
+              </li>
+            ))}
+          </ul>
+        </div>
         {errors.password && <span className="field-error">{errors.password.message}</span>}
-        <p className="password-hint">Use at least 6 characters, with an uppercase and a lowercase letter.</p>
 
         <button className="button button-accent auth-submit" disabled={isSubmitting} type="submit">
           {isSubmitting ? "Creating account…" : "Register"} <ArrowRight size={16} aria-hidden="true" />

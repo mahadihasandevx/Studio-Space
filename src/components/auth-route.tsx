@@ -19,9 +19,10 @@ function safeRedirectPath(value: string | null) {
 export function AuthRoute({ mode }: { mode: "login" | "register" }) {
   const searchParams = useSearchParams();
   const redirectTo = safeRedirectPath(searchParams.get("redirect"));
+  const registered = searchParams.get("registered") === "1";
 
   return mode === "login" ? (
-    <LoginForm redirectTo={redirectTo} />
+    <LoginForm redirectTo={redirectTo} registered={registered} />
   ) : (
     <RegistrationForm redirectTo={redirectTo} />
   );
