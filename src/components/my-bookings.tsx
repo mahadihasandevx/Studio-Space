@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
@@ -10,6 +10,7 @@ import { z } from "zod";
 import { ApiError, apiRequest } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { bookingSchema, type BookingData } from "@/lib/bookings";
+import { useEscapeToClose } from "@/lib/use-escape-close";
 
 const bookingsResponseSchema = z.object({ data: z.array(bookingSchema) });
 const cancelledBookingResponseSchema = z.object({ data: bookingSchema });
@@ -167,7 +168,7 @@ export function MyBookings() {
                   </div>
                   <span className="booking-date"><CalendarDays size={14} />{formatBookingDate(booking.date)}</span>
                   <span className="booking-time">{booking.startTime} – {booking.endTime} · {booking.totalHours} {booking.totalHours === 1 ? "hour" : "hours"}</span>
-                  <span className="booking-location"><MapPin size={14} />Studio booking</span>
+                  <span className="booking-location"><MapPin size={14} />{booking.studioLocation || "Studio booking"}</span>
                 </div>
                 <div className="my-booking-total"><small>Total</small><strong>${booking.totalAmount.toFixed(2)}</strong><span>${booking.hourlyRate} / hour</span></div>
                 <div className="my-booking-actions">
@@ -189,22 +190,45 @@ export function MyBookings() {
       </div>
 
       {selectedBooking && (
-        <div className="dialog-backdrop" onMouseDown={(event) => {
-          if (event.target === event.currentTarget && !cancelling) setSelectedBooking(null);
-        }}>
-          <section aria-labelledby="cancel-booking-title" aria-modal="true" className="confirm-dialog" role="alertdialog">
-            <span className="confirm-icon"><X size={20} /></span>
-            <h2 id="cancel-booking-title">Cancel this request?</h2>
-            <p>Your pending request for <strong>{selectedBooking.studioTitle}</strong> will be cancelled.</p>
-            <div className="confirm-actions">
-              <button className="button button-outline" disabled={cancelling} onClick={() => setSelectedBooking(null)} type="button">Keep request</button>
-              <button className="button button-danger" disabled={cancelling} onClick={() => void cancelBooking()} type="button">
-                {cancelling ? "Cancelling…" : "Cancel request"}
-              </button>
-            </div>
-          </section>
-        </div>
+        <CancelBookingDialog
+          booking={selectedBooking}
+          cancelling={cancelling}
+          onClose={() => setSelectedBooking(null)}
+          onConfirm={() => void cancelBooking()}
+        />
       )}
     </main>
+  );
+}
+
+function CancelBookingDialog({
+  booking,
+  cancelling,
+  onClose,
+  onConfirm,
+}: {
+  booking: BookingData;
+  cancelling: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useEscapeToClose(onClose, dialogRef);
+  return (
+    <div className="dialog-backdrop" onMouseDown={(event) => {
+      if (event.target === event.currentTarget && !cancelling) onClose();
+    }}>
+      <section aria-labelledby="cancel-booking-title" aria-modal="true" className="confirm-dialog" ref={dialogRef} role="alertdialog" tabIndex={-1}>
+        <span className="confirm-icon"><X size={20} /></span>
+        <h2 id="cancel-booking-title">Cancel this request?</h2>
+        <p>Your pending request for <strong>{booking.studioTitle}</strong> will be cancelled.</p>
+        <div className="confirm-actions">
+          <button className="button button-outline" disabled={cancelling} onClick={onClose} type="button">Keep request</button>
+          <button className="button button-danger" disabled={cancelling} onClick={onConfirm} type="button">
+            {cancelling ? "Cancelling…" : "Cancel request"}
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
