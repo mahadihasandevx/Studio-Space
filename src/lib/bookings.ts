@@ -5,6 +5,7 @@ export const bookingSchema = z.object({
   studioId: z.string(),
   studioTitle: z.string(),
   studioImage: z.string().url().nullable(),
+  studioLocation: z.string().default(""),
   hostId: z.string(),
   customerId: z.string(),
   customerName: z.string(),

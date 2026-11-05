@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, CalendarDays, Clock3, X } from "lucide-react";
@@ -8,6 +8,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { apiRequest, jsonBody } from "@/lib/api";
+import { useEscapeToClose } from "@/lib/use-escape-close";
 import type { StudioData } from "@/lib/studios";
 
 const bookingSchema = z
@@ -67,6 +68,7 @@ export function BookingModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const dialogRef = useRef<HTMLElement | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
@@ -81,6 +83,7 @@ export function BookingModal({
   const endTime = useWatch({ control, name: "endTime" });
   const hours = durationInHours(startTime, endTime);
   const estimate = studio.hourlyRate * hours;
+  useEscapeToClose(onClose, dialogRef);
 
   async function onSubmit(values: BookingValues) {
     setFormError(null);
@@ -111,7 +114,9 @@ export function BookingModal({
         aria-labelledby="booking-modal-title"
         aria-modal="true"
         className="booking-modal"
+        ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
       >
         <div className="booking-modal-heading">
           <div>
