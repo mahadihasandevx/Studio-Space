@@ -68,6 +68,7 @@ export function StudioForm({
   const [uploading, setUploading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState("");
+  const [imageInputError, setImageInputError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -104,15 +105,21 @@ export function StudioForm({
 
   async function uploadImage(file: File) {
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      toast.error("Choose a JPEG, PNG, or WebP image.");
+      const message = "Choose a JPEG, PNG, or WebP image.";
+      setImageInputError(message);
+      toast.error(message);
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      toast.error("Images must be 8 MB or smaller.");
+      const message = "Images must be 8 MB or smaller.";
+      setImageInputError(message);
+      toast.error(message);
       return;
     }
     if (images.length >= 10) {
-      toast.error("A listing can include up to 10 images.");
+      const message = "A listing can include up to 10 images.";
+      setImageInputError(message);
+      toast.error(message);
       return;
     }
 
@@ -136,15 +143,17 @@ export function StudioForm({
       const nextImages = [...getValues("images"), payload.data.url];
       setImages(nextImages);
       setValue("images", nextImages, { shouldValidate: true });
+      setImageInputError(null);
       toast.success("Studio image uploaded.");
     } catch (error) {
-      toast.error(
+      const message =
         error instanceof ApiError
           ? error.message
           : error instanceof Error
             ? error.message
-            : "The image could not be uploaded.",
-      );
+            : "The image could not be uploaded.";
+      setImageInputError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -159,17 +168,22 @@ export function StudioForm({
   function addImageUrl() {
     const parsedUrl = z.string().url().safeParse(imageUrl.trim());
     if (!parsedUrl.success) {
-      toast.error("Enter a valid public image URL.");
+      const message = "Enter a valid public image URL.";
+      setImageInputError(message);
+      toast.error(message);
       return;
     }
     if (images.length >= 10) {
-      toast.error("A listing can include up to 10 images.");
+      const message = "A listing can include up to 10 images.";
+      setImageInputError(message);
+      toast.error(message);
       return;
     }
     const nextImages = [...getValues("images"), parsedUrl.data];
     setImages(nextImages);
     setValue("images", nextImages, { shouldValidate: true });
     setImageUrl("");
+    setImageInputError(null);
     toast.success("Image URL added.");
   }
 
@@ -277,6 +291,8 @@ export function StudioForm({
                 <span>JPEG, PNG or WebP · 8 MB max per image</span>
                 <input
                   accept="image/jpeg,image/png,image/webp"
+                  aria-describedby={imageInputError ? "studio-image-error" : undefined}
+                  aria-invalid={Boolean(imageInputError)}
                   disabled={uploading}
                   onChange={(event) => {
                     const file = event.target.files?.[0];
@@ -292,6 +308,8 @@ export function StudioForm({
                 <label className="form-field">
                   <span>Image URL</span>
                   <input
+                    aria-describedby={imageInputError ? "studio-image-error" : undefined}
+                    aria-invalid={Boolean(imageInputError)}
                     onChange={(event) => setImageUrl(event.target.value)}
                     placeholder="https://images.example.com/studio.jpg"
                     type="url"
@@ -301,6 +319,7 @@ export function StudioForm({
                 <button className="button button-outline" onClick={addImageUrl} type="button">Add image URL</button>
               </div>
             )}
+            {imageInputError && <p className="field-error" id="studio-image-error" role="alert">{imageInputError}</p>}
             <div className="uploaded-images">
               {images.map((image, index) => (
                 <div className="uploaded-image" key={image} style={{ backgroundImage: `url("${image}")` }}>

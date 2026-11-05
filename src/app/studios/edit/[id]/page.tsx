@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { RouteLoading } from "@/components/route-loading";
 import { StudioEditRoute } from "@/components/studio-edit-route";
 
 export default function EditStudioPage({
@@ -7,7 +8,7 @@ export default function EditStudioPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="section-padding text-center">Loading studio...</div>}>
+    <Suspense fallback={<RouteLoading />}>
       <EditStudioPageContent params={params} />
     </Suspense>
   );
