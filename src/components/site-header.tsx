@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { Aperture, ArrowUpRight, CalendarDays, Heart, House, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRound, X } from "lucide-react";
@@ -24,7 +25,28 @@ export function SiteHeader() {
   const { data: session, isPending } = authClient.useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement | null>(null);
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  // Close the profile menu on outside click or Escape (hover still opens it
+  // on desktop, but the menu also works for keyboard and touch users).
+  useEffect(() => {
+    if (!profileOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setProfileOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [profileOpen]);
 
   async function signOut() {
     router.replace("/");
@@ -91,17 +113,31 @@ export function SiteHeader() {
           {!isPending && session ? (
             <div
               className="profile-menu"
+              ref={profileRef}
               onMouseEnter={() => setProfileOpen(true)}
               onMouseLeave={() => setProfileOpen(false)}
             >
               <button
                 className="profile-trigger"
-                onClick={() => setProfileOpen(true)}
+                onClick={() => setProfileOpen((open) => !open)}
                 type="button"
                 aria-label="Open account menu"
                 aria-expanded={profileOpen}
               >
-                <span className="profile-avatar">{session.user.name.trim().charAt(0).toUpperCase() || <UserRound size={15} />}</span>
+                <span className="profile-avatar">
+                  {session.user.image ? (
+                    <Image
+                      alt=""
+                      className="profile-avatar-image"
+                      height={35}
+                      src={session.user.image}
+                      unoptimized
+                      width={35}
+                    />
+                  ) : (
+                    session.user.name.trim().charAt(0).toUpperCase() || <UserRound size={15} />
+                  )}
+                </span>
                 <span className="profile-name">{session.user.name.split(" ")[0]}</span>
               </button>
               {profileOpen && (
