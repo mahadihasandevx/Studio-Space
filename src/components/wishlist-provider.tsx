@@ -16,6 +16,8 @@ const toggleResponseSchema = z.object({
 type WishlistContextValue = {
   isSaved: (studioId: string) => boolean;
   isPending: (studioId: string) => boolean;
+  /** True once the wishlist ids for the signed-in user have loaded. */
+  isLoaded: boolean;
   toggleStudio: (studioId: string) => Promise<void>;
 };
 
@@ -41,7 +43,16 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
           idsResponseSchema,
           { signal: controller.signal },
         );
-        setWishlist({ userId, ids: new Set(result.data) });
+        // Merge instead of overwriting so optimistic toggles that raced with
+        // this request are never lost.
+        setWishlist((current) => {
+          if (current.userId !== userId) {
+            return { userId, ids: new Set(result.data) };
+          }
+          const ids = new Set(current.ids);
+          for (const id of result.data) ids.add(id);
+          return { userId, ids };
+        });
       } catch (error) {
         if (controller.signal.aborted) return;
         toast.error(
@@ -102,9 +113,11 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     }
   }, [pendingIds, router, session]);
 
+  const isLoaded = Boolean(session && wishlist.userId === session.user.id);
+
   const value = useMemo(
-    () => ({ isSaved, isPending, toggleStudio }),
-    [isPending, isSaved, toggleStudio],
+    () => ({ isSaved, isPending, isLoaded, toggleStudio }),
+    [isLoaded, isPending, isSaved, toggleStudio],
   );
 
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;

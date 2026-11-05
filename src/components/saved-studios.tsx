@@ -8,6 +8,7 @@ import { z } from "zod";
 import { ApiError, apiRequest } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { StudioCard } from "@/components/studio-card";
+import { useWishlist } from "@/components/wishlist-provider";
 import { studioSchema, type StudioData } from "@/lib/studios";
 
 const savedResponseSchema = z.object({ data: z.array(studioSchema) });
@@ -15,6 +16,7 @@ const savedResponseSchema = z.object({ data: z.array(studioSchema) });
 export function SavedStudios() {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
+  const { isSaved, isLoaded: wishlistLoaded } = useWishlist();
   const [studios, setStudios] = useState<StudioData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +88,12 @@ export function SavedStudios() {
           </div>
         ) : (
           <div className="studio-grid">
-            {studios.map((studio) => <StudioCard key={studio.id} studio={studio} />)}
+            {/* Once the wishlist ids have loaded, un-saved studios drop off
+                the shortlist immediately instead of lingering until reload. */}
+            {(wishlistLoaded
+              ? studios.filter((studio) => isSaved(studio.id))
+              : studios
+            ).map((studio) => <StudioCard key={studio.id} studio={studio} />)}
           </div>
         )}
       </div>
