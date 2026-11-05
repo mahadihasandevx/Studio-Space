@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CalendarPlus, Edit3, Plus, Trash2 } from "lucide-react";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ApiError, apiRequest } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { studioSchema, type StudioData } from "@/lib/studios";
+import { useEscapeToClose } from "@/lib/use-escape-close";
 import { z } from "zod";
 
 const listingsResponseSchema = z.object({ data: z.array(studioSchema) });
@@ -121,7 +122,9 @@ export function MyListings() {
                   style={studio.imageUrl ? { backgroundImage: `url("${studio.imageUrl}")` } : undefined}
                 />
                 <div className="listing-row-main">
-                  <span className="listing-category">{studio.category}</span>
+                  <span className="listing-category">
+                    {studio.category}{studio.isDemo ? " · Demo listing" : ""}
+                  </span>
                   <Link className="listing-title" href={`/studios/${studio.id}`}>{studio.title}</Link>
                   <span className="listing-location">{studio.location}</span>
                 </div>
@@ -137,22 +140,45 @@ export function MyListings() {
       </div>
 
       {selectedStudio && (
-        <div className="dialog-backdrop" onMouseDown={(event) => {
-          if (event.target === event.currentTarget && !deleting) setSelectedStudio(null);
-        }}>
-          <section aria-labelledby="delete-studio-title" aria-modal="true" className="confirm-dialog" role="alertdialog">
-            <span className="confirm-icon"><Trash2 size={20} /></span>
-            <h2 id="delete-studio-title">Remove this studio?</h2>
-            <p><strong>{selectedStudio.title}</strong> will no longer appear in studio search. This can’t be undone.</p>
-            <div className="confirm-actions">
-              <button className="button button-outline" disabled={deleting} onClick={() => setSelectedStudio(null)} type="button">Keep listing</button>
-              <button className="button button-danger" disabled={deleting} onClick={() => void deleteStudio()} type="button">
-                {deleting ? "Removing…" : "Delete studio"}
-              </button>
-            </div>
-          </section>
-        </div>
+        <DeleteStudioDialog
+          studio={selectedStudio}
+          deleting={deleting}
+          onClose={() => setSelectedStudio(null)}
+          onConfirm={() => void deleteStudio()}
+        />
       )}
     </main>
+  );
+}
+
+function DeleteStudioDialog({
+  studio,
+  deleting,
+  onClose,
+  onConfirm,
+}: {
+  studio: StudioData;
+  deleting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useEscapeToClose(onClose, dialogRef);
+  return (
+    <div className="dialog-backdrop" onMouseDown={(event) => {
+      if (event.target === event.currentTarget && !deleting) onClose();
+    }}>
+      <section aria-labelledby="delete-studio-title" aria-modal="true" className="confirm-dialog" ref={dialogRef} role="alertdialog" tabIndex={-1}>
+        <span className="confirm-icon"><Trash2 size={20} /></span>
+        <h2 id="delete-studio-title">Remove this studio?</h2>
+        <p><strong>{studio.title}</strong> will no longer appear in studio search. This can’t be undone.</p>
+        <div className="confirm-actions">
+          <button className="button button-outline" disabled={deleting} onClick={onClose} type="button">Keep listing</button>
+          <button className="button button-danger" disabled={deleting} onClick={onConfirm} type="button">
+            {deleting ? "Removing…" : "Delete studio"}
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
