@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowDown,
   ArrowRight,
@@ -22,6 +23,8 @@ const categories = [
     detail: "Natural light to full production",
     icon: Camera,
     tone: "peach",
+    image:
+      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=700&q=80",
   },
   {
     name: "Film stages",
@@ -29,6 +32,8 @@ const categories = [
     detail: "Room to bring big ideas to life",
     icon: Clapperboard,
     tone: "lavender",
+    image:
+      "https://images.unsplash.com/photo-1503428593586-e225b39bddfe?auto=format&fit=crop&w=700&q=80",
   },
   {
     name: "Podcast rooms",
@@ -36,6 +41,8 @@ const categories = [
     detail: "Sound-treated and ready to record",
     icon: AudioLines,
     tone: "mint",
+    image:
+      "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=700&q=80",
   },
   {
     name: "Music suites",
@@ -43,6 +50,8 @@ const categories = [
     detail: "Find your next creative frequency",
     icon: Disc3,
     tone: "blue",
+    image:
+      "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?auto=format&fit=crop&w=700&q=80",
   },
   {
     name: "Art workshops",
@@ -50,6 +59,8 @@ const categories = [
     detail: "Make a little room for making",
     icon: Paintbrush2,
     tone: "yellow",
+    image:
+      "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=700&q=80",
   },
 ];
 
@@ -117,20 +128,30 @@ export default function Home() {
             </p>
           </div>
           <div className="category-grid">
-            {categories.map(({ name, value, detail, icon: Icon, tone }) => (
+            {categories.map(({ name, value, detail, icon: Icon, tone, image }) => (
               <Link
-                className="category-card"
+                className={`category-card tone-${tone}`}
                 href={`/studios?category=${encodeURIComponent(value)}`}
                 key={name}
               >
-                <span className={`category-icon ${tone}`}>
-                  <Icon size={22} strokeWidth={1.7} aria-hidden="true" />
+                <Image
+                  className="category-media"
+                  src={image}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
+                />
+                <span className="category-shade" aria-hidden="true" />
+                <span className="category-icon">
+                  <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
                 </span>
                 <span className="category-copy">
                   <strong>{name}</strong>
                   <span>{detail}</span>
                 </span>
-                <ArrowRight className="category-arrow" size={18} aria-hidden="true" />
+                <span className="category-arrow" aria-hidden="true">
+                  <ArrowRight size={16} />
+                </span>
               </Link>
             ))}
           </div>
