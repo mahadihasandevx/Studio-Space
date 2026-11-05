@@ -8,6 +8,7 @@ export const studioCardSchema = z.object({
   hourlyRate: z.number(),
   imageUrl: z.string().url().nullable(),
   rating: z.number().nullable(),
+  isDemo: z.boolean().default(false),
 });
 
 export const studioSchema = studioCardSchema.extend({
@@ -40,6 +41,34 @@ export const studioCategories = [
   "Music Suites",
   "Art Workshops",
 ] as const;
+
+export const marketplaceHighlightsSchema = z.object({
+  data: z.object({
+    studios: z.number(),
+    cities: z.number(),
+    categories: z.number(),
+    reviews: z.number(),
+    averageRating: z.number(),
+    topCategories: z.array(
+      z.object({ name: z.string(), count: z.number() }),
+    ),
+    testimonials: z.array(
+      z.object({
+        author: z.string(),
+        rating: z.number(),
+        comment: z.string(),
+        studioTitle: z.string(),
+        studioId: z.string(),
+        createdAt: z.string(),
+      }),
+    ),
+  }),
+});
+
+export type MarketplaceHighlights = z.infer<
+  typeof marketplaceHighlightsSchema
+>["data"];
+export type MarketplaceTestimonial = MarketplaceHighlights["testimonials"][number];
 
 export type StudioCardData = z.infer<typeof studioCardSchema>;
 export type StudioData = z.infer<typeof studioSchema>;
