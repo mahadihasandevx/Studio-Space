@@ -107,6 +107,32 @@ export function Dashboard() {
     }
   }
 
+  async function completeBooking(booking: BookingData) {
+    setConfirmingId(booking.id);
+    try {
+      const result = await apiRequest(
+        `/api/v1/bookings/${encodeURIComponent(booking.id)}/complete`,
+        confirmResponseSchema,
+        { method: "PATCH" },
+      );
+      setDashboard((current) => current && ({
+        ...current,
+        recentHostBookings: current.recentHostBookings.map((item) =>
+          item.id === result.data.id ? result.data : item,
+        ),
+      }));
+      toast.success("Booking marked as completed.");
+    } catch (requestError) {
+      toast.error(
+        requestError instanceof Error
+          ? requestError.message
+          : "This booking could not be completed.",
+      );
+    } finally {
+      setConfirmingId(null);
+    }
+  }
+
   if (isPending || !session || loading) {
     return <main className="section-wrap form-loading" aria-label="Loading dashboard"><div className="details-skeleton" /></main>;
   }
@@ -221,6 +247,16 @@ export function Dashboard() {
                         type="button"
                       >
                         <Check size={14} />{confirmingId === booking.id ? "…" : "Confirm"}
+                      </button>
+                    ) : booking.status === "confirmed" ? (
+                      <button
+                        aria-label={`Mark booking for ${booking.studioTitle} as complete`}
+                        className="confirm-booking-button"
+                        disabled={confirmingId === booking.id}
+                        onClick={() => void completeBooking(booking)}
+                        type="button"
+                      >
+                        <Check size={14} />{confirmingId === booking.id ? "…" : "Complete"}
                       </button>
                     ) : (
                       <span className={`status-badge status-${booking.status}`}>{booking.status}</span>
