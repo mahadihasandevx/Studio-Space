@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { StudioExplorer } from "@/components/studio-explorer";
+import { RouteLoading } from "@/components/route-loading";
 
 export default function StudiosPage() {
   return (
-    <Suspense fallback={<main className="explore-page explore-page-loading" aria-label="Loading studios" />}>
+    <Suspense fallback={<RouteLoading />}>
       <StudioExplorer />
     </Suspense>
   );

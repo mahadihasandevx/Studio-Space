@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, RotateCw, Search, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  RotateCw,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import { ApiError, apiRequest } from "@/lib/api";
 import { StudioCard } from "@/components/studio-card";
 import { studioCardSchema } from "@/lib/studios";
@@ -25,6 +32,7 @@ type Filters = {
   location: string;
   minPrice: string;
   maxPrice: string;
+  minCapacity: string;
   sort: string;
   page: number;
 };
@@ -35,40 +43,76 @@ const defaultFilters: Filters = {
   location: "",
   minPrice: "",
   maxPrice: "",
+  minCapacity: "",
   sort: "newest",
   page: 1,
 };
 
-export function StudioExplorer({ initialCategory = "" }: { initialCategory?: string }) {
+const listQueryKeys = ["search", "category", "location", "minPrice", "maxPrice", "minCapacity", "sort"] as const;
+
+function filtersFromParams(searchParams: URLSearchParams): Filters {
+  const page = Number(searchParams.get("page"));
+  return {
+    search: searchParams.get("search") ?? "",
+    category: searchParams.get("category") || "",
+    location: searchParams.get("location") ?? "",
+    minPrice: searchParams.get("minPrice") ?? "",
+    maxPrice: searchParams.get("maxPrice") ?? "",
+    minCapacity: searchParams.get("minCapacity") ?? "",
+    sort: searchParams.get("sort") || defaultFilters.sort,
+    page: Number.isFinite(page) && page > 0 ? page : 1,
+  };
+}
+
+function filtersToQuery(filters: Filters): string {
+  const params = new URLSearchParams();
+  for (const key of listQueryKeys) {
+    const value = filters[key];
+    if (value) params.set(key, value);
+  }
+  params.set("page", String(filters.page));
+  return params.toString();
+}
+
+export function StudioExplorer() {
   const searchParams = useSearchParams();
   const [retry, setRetry] = useState(0);
-  const [filters, setFilters] = useState<Filters>({
-    ...defaultFilters,
-    category: initialCategory || searchParams.get("category") || "",
-  });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<Filters>(() => filtersFromParams(searchParams));
+  const lastAppliedQuery = useRef<string>(filtersToQuery(filtersFromParams(searchParams)));
   const [studios, setStudios] = useState<z.infer<typeof studioCardSchema>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
+  const activeFilterCount = [
+    filters.category,
+    filters.location,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.minCapacity,
+  ].filter(Boolean).length;
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFiltersOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [filtersOpen]);
+
   useEffect(() => {
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
-      const params = new URLSearchParams();
-      for (const key of ["search", "category", "location", "minPrice", "maxPrice", "sort"] as const) {
-        const value = filters[key];
-        if (value) params.set(key, value);
-      }
-      params.set("page", String(filters.page));
-      params.set("limit", "12");
-
-      const query = params.toString();
+      const query = filtersToQuery(filters);
+      lastAppliedQuery.current = query;
       window.history.replaceState(null, "", query ? `/studios?${query}` : "/studios");
 
       try {
         const result = await apiRequest(
-          `/api/v1/studios?${query}`,
+          `/api/v1/studios?${query}&limit=12`,
           studioListResponseSchema,
           { signal: controller.signal },
         );
@@ -96,6 +140,19 @@ export function StudioExplorer({ initialCategory = "" }: { initialCategory?: str
     };
   }, [filters, retry]);
 
+  // Keep filter state in sync with search param changes driven by links
+  // (e.g. category links in the footer while already on /studios). The
+  // explorer's own fetch effect rewrites the URL first and records that
+  // query, so self-inflicted updates are ignored.
+  useEffect(() => {
+    const nextFilters = filtersFromParams(searchParams);
+    const nextQuery = filtersToQuery(nextFilters);
+    if (nextQuery === lastAppliedQuery.current) return;
+    lastAppliedQuery.current = nextQuery;
+    setLoading(true);
+    setFilters(nextFilters);
+  }, [searchParams]);
+
   function updateFilter<Key extends keyof Filters>(key: Key, value: Filters[Key]) {
     setLoading(true);
     setFilters((current) => ({
@@ -103,6 +160,12 @@ export function StudioExplorer({ initialCategory = "" }: { initialCategory?: str
       [key]: value,
       page: key === "page" && typeof value === "number" ? value : 1,
     }));
+  }
+
+  function clearFilters() {
+    setLoading(true);
+    setFilters({ ...defaultFilters });
+    setFiltersOpen(false);
   }
 
   return (
@@ -128,9 +191,21 @@ export function StudioExplorer({ initialCategory = "" }: { initialCategory?: str
             <input
               onChange={(event) => updateFilter("search", event.target.value)}
               placeholder="Search by name or location"
+              type="search"
               value={filters.search}
             />
           </label>
+          <button
+            aria-controls="studio-filters"
+            aria-expanded={filtersOpen}
+            className={`filter-toggle${activeFilterCount > 0 ? " has-filters" : ""}`}
+            onClick={() => setFiltersOpen((open) => !open)}
+            type="button"
+          >
+            <SlidersHorizontal size={16} aria-hidden="true" />
+            Filters
+            {activeFilterCount > 0 && <span>{activeFilterCount}</span>}
+          </button>
           <select
             aria-label="Sort studios"
             className="filter-select"
@@ -144,7 +219,67 @@ export function StudioExplorer({ initialCategory = "" }: { initialCategory?: str
           </select>
         </div>
 
-        <div className="explore-filters">
+        {activeFilterCount > 0 && (
+          <div className="active-filters">
+            {filters.category && (
+              <button onClick={() => updateFilter("category", "")} type="button">
+                {filters.category} <X size={12} aria-hidden="true" />
+              </button>
+            )}
+            {filters.location && (
+              <button onClick={() => updateFilter("location", "")} type="button">
+                {filters.location} <X size={12} aria-hidden="true" />
+              </button>
+            )}
+            {(filters.minPrice || filters.maxPrice) && (
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  setFilters((current) => ({ ...current, minPrice: "", maxPrice: "", page: 1 }));
+                }}
+                type="button"
+              >
+                ${filters.minPrice || "0"}–${filters.maxPrice || "any"} / hr{" "}
+                <X size={12} aria-hidden="true" />
+              </button>
+            )}
+            {filters.minCapacity && (
+              <button
+                onClick={() => updateFilter("minCapacity", "")}
+                type="button"
+              >
+                {filters.minCapacity}+ people <X size={12} aria-hidden="true" />
+              </button>
+            )}
+            <button className="active-filters-clear" onClick={clearFilters} type="button">
+              Clear all
+            </button>
+          </div>
+        )}
+
+        {filtersOpen && (
+          <button
+            aria-label="Close filters"
+            className="filters-backdrop"
+            onClick={() => setFiltersOpen(false)}
+            type="button"
+          />
+        )}
+
+        <div
+          className={`explore-filters${filtersOpen ? " is-open" : ""}`}
+          id="studio-filters"
+        >          <div className="explore-filters-heading">
+            <strong>Fine-tune your search</strong>
+            <button
+              aria-label="Close filters"
+              className="filters-close"
+              onClick={() => setFiltersOpen(false)}
+              type="button"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
           <label>
             <span>Category</span>
             <select className="category-filter-select" onChange={(event) => updateFilter("category", event.target.value)} value={filters.category}>
@@ -184,6 +319,20 @@ export function StudioExplorer({ initialCategory = "" }: { initialCategory?: str
               value={filters.maxPrice}
             />
           </label>
+          <label>
+            <span>Minimum capacity</span>
+            <input
+              min="1"
+              max="1000"
+              onChange={(event) => updateFilter("minCapacity", event.target.value)}
+              placeholder="Any"
+              type="number"
+              value={filters.minCapacity}
+            />
+          </label>
+          <button className="button button-accent filters-done" onClick={() => setFiltersOpen(false)} type="button">
+            Show {loading ? "spaces" : `${total} ${total === 1 ? "space" : "spaces"}`}
+          </button>
         </div>
 
         {error ? (
@@ -213,10 +362,7 @@ export function StudioExplorer({ initialCategory = "" }: { initialCategory?: str
             <div><strong>No spaces match those filters yet.</strong><p>Try a different search or clear a filter to see more studios.</p></div>
             <button
               className="button button-outline"
-              onClick={() => {
-                setLoading(true);
-                setFilters({ ...defaultFilters });
-              }}
+              onClick={clearFilters}
               type="button"
             >
               Clear filters
