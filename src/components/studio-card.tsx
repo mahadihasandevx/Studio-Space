@@ -2,24 +2,16 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "motion/react";
 import { ArrowRight, Heart, MapPin, Star } from "lucide-react";
 import type { StudioCardData } from "@/lib/studios";
+import { imageUnoptimized } from "@/lib/image";
 import { useWishlist } from "@/components/wishlist-provider";
 
 export function StudioCard({ studio }: { studio: StudioCardData }) {
   const { isPending, isSaved, toggleStudio } = useWishlist();
   const saved = isSaved(studio.id);
   return (
-    <motion.article
-      className="studio-card"
-      data-category={studio.category}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "0px 0px -40px 0px" }}
-      whileHover={{ y: -7, rotateX: 1.5, rotateY: -1 }}
-      transition={{ duration: 0.28 }}
-    >
+    <article className="studio-card" data-category={studio.category}>
       <Link
         className="studio-image"
         href={`/studios/${studio.id}`}
@@ -32,10 +24,12 @@ export function StudioCard({ studio }: { studio: StudioCardData }) {
             fill
             sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 33vw"
             src={studio.imageUrl}
+            unoptimized={imageUnoptimized(studio.imageUrl)}
           />
         )}
         {!studio.imageUrl && <span className="studio-no-image">StudioSpace</span>}
         <span className="studio-category">{studio.category}</span>
+        {studio.isDemo && <span className="studio-demo-badge">Demo listing</span>}
       </Link>
       <button
         className={`wishlist-link ${saved ? "is-saved" : ""}`}
@@ -63,6 +57,6 @@ export function StudioCard({ studio }: { studio: StudioCardData }) {
           </Link>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }
